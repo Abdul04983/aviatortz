@@ -1,49 +1,144 @@
 
-const express = require('express');
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const User = require('../models/User');
-const { jwtSecret } = require('../config');
+<!DOCTYPE html>
+<html lang="sw">
+<head>
+  <meta charset="UTF-8">
+  <title>Aviator TZ - CashBet Demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      background-color: #0f172a;
+      color: white;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    h1 {
+      color: #facc15;
+    }
+    .multiplier {
+      font-size: 40px;
+      margin: 20px 0;
+    }
+    input, button {
+      padding: 10px;
+      font-size: 16px;
+      margin: 10px;
+      border-radius: 5px;
+      border: none;
+    }
+    input {
+      width: 100px;
+    }
+    button {
+      background-color: #22c55e;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #16a34a;
+    }
+    #history {
+      margin-top: 30px;
+      background: #1e293b;
+      padding: 15px;
+      border-radius: 8px;
+    }
+    .cashout {
+      background-color: #ef4444;
+    }
+  </style>
+</head>
+<body>
 
-const router = express.Router();
+  <h1>🎮 AVIATOR TZ</h1>
+  <p>Weka bet yako kisha uangalie ndege ikipaa... cash out kabla haijadondoka!</p>
 
-// Register new user
-router.post('/register', async (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password)
-    return res.status(400).json({ message: 'Username and password required' });
+  <div>
+    Salio lako: <strong id="balance">10000</strong> TZS
+  </div>
 
-  try {
-    const exists = await User.findOne({ username });
-    if (exists) return res.status(400).json({ message: 'Username already exists' });
+  <div>
+    Kiasi cha bet: 
+    <input type="number" id="betAmount" value="1000" min="100">
+    <button onclick="placeBet()">Weka Bet</button>
+  </div>
 
-    const hashed = await bcrypt.hash(password, 10);
-    const user = new User({ username, password: hashed });
-    await user.save();
-    res.json({ message: 'User registered successfully' });
-  } catch (err) {
-    res.status(500).json({ message: 'Server error' });
-  }
-});
+  <div class="multiplier" id="multiplier">1.00x</div>
+  <button id="cashOutBtn" class="cashout" onclick="cashOut()" disabled>Cash Out</button>
 
-// Login user
-router.post('/login', async (req, res) => {
-  const { username, password } = req.body;
-  if (!username || !password)
-    return res.status(400).json({ message: 'Username and password required' });
+  <div id="history">
+    <h3>Historia ya Bet</h3>
+    <ul id="historyList"></ul>
+  </div>
 
-  try {
-    const user = await User.findOne({ username });
-    if (!user) return res.status(400).json({ message: 'Invalid credentials' });
+  <script>
+    let multiplier = 1;
+    let interval;
+    let betPlaced = false;
+    let cashOutAllowed = false;
+    let betAmount = 0;
+    let balance = 10000;
 
-    const valid = await bcrypt.compare(password, user.password);
-    if (!valid) return res.status(400).json({ message: 'Invalid credentials' });
+    const multiplierDisplay = document.getElementById("multiplier");
+    const balanceDisplay = document.getElementById("balance");
+    const historyList = document.getElementById("historyList");
+    const cashOutBtn = document.getElementById("cashOutBtn");
 
-    const token = jwt.sign({ id: user._id }, jwtSecret);
-    res.json({ token, balance: user.balance, username: user.username });
-  } catch (err) {
-    res.status(500).json({ message: 'Server error' });
-  }
-});
+    function placeBet() {
+      if (betPlaced) return;
+      betAmount = parseInt(document.getElementById("betAmount").value);
+      if (betAmount > balance || betAmount <= 0) {
+        alert("Kiasi cha bet si halali!");
+        return;
+      }
+      balance -= betAmount;
+      balanceDisplay.innerText = balance;
+      multiplier = 1;
+      multiplierDisplay.innerText = multiplier.toFixed(2) + "x";
+      betPlaced = true;
+      cashOutAllowed = true;
+      cashOutBtn.disabled = false;
+      interval = setInterval(updateMultiplier, 100);
+    }
 
-module.exports = router;
+    function updateMultiplier() {
+      multiplier += 0.01;
+      multiplierDisplay.innerText = multiplier.toFixed(2) + "x";
+      if (Math.random() < 0.01 + multiplier / 100) {
+        gameOver();
+      }
+    }
+
+    function cashOut() {
+      if (!betPlaced || !cashOutAllowed) return;
+      clearInterval(interval);
+      let winnings = Math.floor(betAmount * multiplier);
+      balance += winnings;
+      balanceDisplay.innerText = balance;
+      logHistory(`✅ Ume-cash out: ${winnings} TZS kwa ${multiplier.toFixed(2)}x`);
+      resetGame();
+    }
+
+    function gameOver() {
+      logHistory(`❌ Ndege imeanguka! Uliweka ${betAmount} TZS kwa ${multiplier.toFixed(2)}x`);
+      resetGame();
+    }
+
+    function logHistory(msg) {
+      let li = document.createElement("li");
+      li.innerText = msg;
+      historyList.prepend(li);
+    }
+
+    function resetGame() {
+      betPlaced = false;
+      cashOutAllowed = false;
+      cashOutBtn.disabled = true;
+      multiplier = 1;
+    }
+  </script>
+</body>
+</html>
+
+   
