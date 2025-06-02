@@ -1,102 +1,60 @@
 
-    
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html lang="sw">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>AVIATOR TZ - Demo</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>AVIATOR TZ - Demo Game</title>
   <style>
     body {
+      margin: 0;
       font-family: Arial, sans-serif;
-      background-color: #0f172a;
+      background: #0f172a;
       color: white;
       text-align: center;
-      padding: 20px;
     }
     h1 {
+      margin-top: 30px;
       color: #facc15;
     }
     .plane {
       font-size: 60px;
-      margin: 20px 0;
       animation: fly 5s linear infinite;
+      margin: 40px 0;
     }
     @keyframes fly {
       0% { transform: translateX(-100%); }
       100% { transform: translateX(100vw); }
     }
     button {
+      background-color: #22c55e;
+      border: none;
       padding: 15px 30px;
       font-size: 18px;
-      border: none;
       border-radius: 8px;
       cursor: pointer;
-      margin-top: 20px;
-    }
-    .bet-btn {
-      background-color: #22c55e;
       color: white;
     }
-    .bet-btn:hover {
+    button:hover {
       background-color: #16a34a;
     }
-    .cashout-btn {
-      background-color: #f43f5e;
-      color: white;
-      display: none;
-    }
-    .result {
-      font-size: 20px;
-      margin-top: 30px;
+    .footer {
+      font-size: 14px;
+      color: #94a3b8;
+      margin-top: 50px;
     }
   </style>
 </head>
 <body>
-  <h1>Karibu AVIATOR TZ</h1>
-  <p>Cheza demo ya kubashiri ndege itapaa kwa muda gani!</p>
+  <h1>Karibu kwenye AVIATOR TZ</h1>
+  <p>Bashiri wakati ndege itapaa na jaribu ku-"Cash Out" kabla haijadondoka!</p>
   <div class="plane">🛫</div>
-
-  <button class="bet-btn" onclick="startGame()">Weka Bet ya Mfano</button>
-  <button class="cashout-btn" onclick="cashOut()">Cash Out</button>
-
-  <div class="result" id="result"></div>
-
-  <script>
-    let gameInterval;
-    let seconds = 0;
-    let gameOver = false;
-
-    function startGame() {
-      document.querySelector('.bet-btn').style.display = 'none';
-      document.querySelector('.cashout-btn').style.display = 'inline-block';
-      document.getElementById('result').textContent = '';
-
-      seconds = 0;
-      gameOver = false;
-
-      gameInterval = setInterval(() => {
-        seconds += 0.1;
-        const crashTime = Math.random() * 5 + 2;
-
-        if (seconds >= crashTime) {
-          clearInterval(gameInterval);
-          gameOver = true;
-          document.querySelector('.cashout-btn').style.display = 'none';
-          document.getElementById('result').textContent = `💥 Ndege imeanguka baada ya sekunde ${crashTime.toFixed(1)}! Umepoteza.`;
-          document.querySelector('.bet-btn').style.display = 'inline-block';
-        }
-      }, 100);
-    }
-
-    function cashOut() {
-      if (!gameOver) {
-        clearInterval(gameInterval);
-        document.querySelector('.cashout-btn').style.display = 'none';
-        document.getElementById('result').textContent = `✅ Ume-cash out baada ya sekunde ${seconds.toFixed(1)}! Hongera, umeshinda mfano.`;
-        document.querySelector('.bet-btn').style.display = 'inline-block';
-      }
-    }
-  </script>
+  <button onclick="alert('Bet yako imewekwa! (Demo tu - hakuna pesa halisi)')">
+    Weka Bet
+  </button>
+  <p class="footer">⚠️ Hii ni toleo la demo tu - hakuna pesa halisi.</p>
 </body>
 </html>
+
+
+  
