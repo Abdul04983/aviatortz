@@ -1,110 +1,39 @@
-<!DOCTYPE html>
-<html lang="sw">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Aviator TZ</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background-color: #0f172a;
-      color: white;
-      text-align: center;
-      padding: 20px;
-    }
-    h1 {
-      color: #facc15;
-    }
-    .multiplier {
-      font-size: 48px;
-      margin: 20px;
-    }
-    .plane {
-      font-size: 60px;
-      animation: fly 5s linear infinite;
-      display: inline-block;
-    }
-    @keyframes fly {
-      0% { transform: translateX(-100%); }
-      100% { transform: translateX(100vw); }
-    }
-    input, button {
-      padding: 10px;
-      margin: 10px;
-      font-size: 16px;
-    }
-    #status {
-      margin-top: 20px;
-      color: #94a3b8;
-    }
-  </style>
-</head>
-<body>
-  <h1>Aviator TZ</h1>
-  <div class="plane">🛫</div>
-  <div class="multiplier" id="multiplier">x1.00</div>
 
-  <div>
-    <input type="number" id="betAmount" placeholder="Weka dau..." />
-    <button onclick="placeBet()">Weka Bet</button>
-    <button onclick="cashOut()">Cash Out</button>
-  </div>
+const express = require('express');
+const router = express.Router();
+const auth = require('../middleware/auth');
+const User = require('../models/User');
 
-  <div id="status">Hakuna dau lililowekwa.</div>
+router.post('/bet', auth, async (req, res) => {
+  const { amount } = req.body;
+  if (!amount || amount <= 0) return res.status(400).json({ message: 'Invalid bet amount' });
 
-  <script>
-    let multiplier = 1.00;
-    let interval;
-    let inGame = false;
-    let betPlaced = false;
+  try {
+    const user = await User.findById(req.user.id);
+    if (user.balance < amount) return res.status(400).json({ message: 'Insufficient balance' });
 
-    function startGame() {
-      interval = setInterval(() => {
-        multiplier += 0.01;
-        document.getElementById('multiplier').textContent = `x${multiplier.toFixed(2)}`;
+    user.balance -= amount;
+    await user.save();
+    res.json({ message: 'Bet placed', balance: user.balance });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
-        // Crash randomly
-        if (Math.random() < 0.005 * multiplier) {
-          clearInterval(interval);
-          document.getElementById('status').textContent = `💥 Crash at x${multiplier.toFixed(2)}!`; 
-          if (betPlaced && inGame) {
-            document.getElementById('status').textContent += ' Umeanguka, umepoteza dau.';
-          }
-          reset();
-        }
-      }, 100);
-    }
+router.post('/cashout', auth, async (req, res) => {
+  const { winnings } = req.body;
+  if (!winnings || winnings <= 0) return res.status(400).json({ message: 'Invalid winnings' });
 
-    function placeBet() {
-      const amount = document.getElementById('betAmount').value;
-      if (!amount || amount <= 0) return alert('Weka kiasi sahihi!');
-      if (betPlaced) return alert('Tayari umeweka dau!');
-      betPlaced = true;
-      inGame = true;
-      multiplier = 1.00;
-      document.getElementById('status').textContent = `Umeweka dau la ${amount}. Ndege imeanza kupaa...`;
-      clearInterval(interval);
-      startGame();
-    }
+  try {
+    const user = await User.findById(req.user.id);
+    user.balance += winnings;
+    await user.save();
+    res.json({ message: 'Cash out successful', balance: user.balance });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
 
-    function cashOut() {
-      if (!inGame || !betPlaced) return;
-      clearInterval(interval);
-      const won = document.getElementById('betAmount').value * multiplier;
-      document.getElementById('status').textContent = `✅ Umejitoa kwa x${multiplier.toFixed(2)}. Umeshinda ${won.toFixed(2)}`;
-      reset();
-    }
-
-    function reset() {
-      inGame = false;
-      betPlaced = false;
-      multiplier = 1.00;
-    }
-  </script>
-</body>
-</html>
-
-
-
-    
-
+module.exports = router;
+     
+  
