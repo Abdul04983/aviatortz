@@ -1,16 +1,18 @@
 
-const jwt = require('jsonwebtoken');
-const { jwtSecret } = require('../config');
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
 
-module.exports = function (req, res, next) {
-  const token = req.header('Authorization');
-  if (!token) return res.status(401).json({ message: 'No token' });
+const app = express();
+app.use(cors());
+app.use(express.json());
 
-  try {
-    const decoded = jwt.verify(token.split(' ')[1], jwtSecret);
-    req.user = decoded;
-    next();
-  } catch {
-    res.status(401).json({ message: 'Invalid token' });
-  }
-};
+app.use('/api/auth', require('./routes/auth'));
+app.use('/api', require('./routes/bet')); // for /bet and /cashout
+
+mongoose.connect('mongodb://localhost/aviatortz', {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+});
+
+app.listen(5000, () => console.log('Server running on port 5000'));
