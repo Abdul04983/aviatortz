@@ -1,15 +1,14 @@
-
 <!DOCTYPE html>
 <html lang="sw">
 <head>
   <meta charset="UTF-8">
-  <title>Aviator TZ - CashBet Demo</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aviator TZ</title>
   <style>
     body {
+      font-family: Arial, sans-serif;
       background-color: #0f172a;
       color: white;
-      font-family: Arial, sans-serif;
       text-align: center;
       padding: 20px;
     }
@@ -17,128 +16,95 @@
       color: #facc15;
     }
     .multiplier {
-      font-size: 40px;
-      margin: 20px 0;
+      font-size: 48px;
+      margin: 20px;
+    }
+    .plane {
+      font-size: 60px;
+      animation: fly 5s linear infinite;
+      display: inline-block;
+    }
+    @keyframes fly {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100vw); }
     }
     input, button {
       padding: 10px;
-      font-size: 16px;
       margin: 10px;
-      border-radius: 5px;
-      border: none;
+      font-size: 16px;
     }
-    input {
-      width: 100px;
-    }
-    button {
-      background-color: #22c55e;
-      color: white;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #16a34a;
-    }
-    #history {
-      margin-top: 30px;
-      background: #1e293b;
-      padding: 15px;
-      border-radius: 8px;
-    }
-    .cashout {
-      background-color: #ef4444;
+    #status {
+      margin-top: 20px;
+      color: #94a3b8;
     }
   </style>
 </head>
 <body>
-
-  <h1>🎮 AVIATOR TZ</h1>
-  <p>Weka bet yako kisha uangalie ndege ikipaa... cash out kabla haijadondoka!</p>
-
-  <div>
-    Salio lako: <strong id="balance">10000</strong> TZS
-  </div>
+  <h1>Aviator TZ</h1>
+  <div class="plane">🛫</div>
+  <div class="multiplier" id="multiplier">x1.00</div>
 
   <div>
-    Kiasi cha bet: 
-    <input type="number" id="betAmount" value="1000" min="100">
+    <input type="number" id="betAmount" placeholder="Weka dau..." />
     <button onclick="placeBet()">Weka Bet</button>
+    <button onclick="cashOut()">Cash Out</button>
   </div>
 
-  <div class="multiplier" id="multiplier">1.00x</div>
-  <button id="cashOutBtn" class="cashout" onclick="cashOut()" disabled>Cash Out</button>
-
-  <div id="history">
-    <h3>Historia ya Bet</h3>
-    <ul id="historyList"></ul>
-  </div>
+  <div id="status">Hakuna dau lililowekwa.</div>
 
   <script>
-    let multiplier = 1;
+    let multiplier = 1.00;
     let interval;
+    let inGame = false;
     let betPlaced = false;
-    let cashOutAllowed = false;
-    let betAmount = 0;
-    let balance = 10000;
 
-    const multiplierDisplay = document.getElementById("multiplier");
-    const balanceDisplay = document.getElementById("balance");
-    const historyList = document.getElementById("historyList");
-    const cashOutBtn = document.getElementById("cashOutBtn");
+    function startGame() {
+      interval = setInterval(() => {
+        multiplier += 0.01;
+        document.getElementById('multiplier').textContent = `x${multiplier.toFixed(2)}`;
 
-    function placeBet() {
-      if (betPlaced) return;
-      betAmount = parseInt(document.getElementById("betAmount").value);
-      if (betAmount > balance || betAmount <= 0) {
-        alert("Kiasi cha bet si halali!");
-        return;
-      }
-      balance -= betAmount;
-      balanceDisplay.innerText = balance;
-      multiplier = 1;
-      multiplierDisplay.innerText = multiplier.toFixed(2) + "x";
-      betPlaced = true;
-      cashOutAllowed = true;
-      cashOutBtn.disabled = false;
-      interval = setInterval(updateMultiplier, 100);
+        // Crash randomly
+        if (Math.random() < 0.005 * multiplier) {
+          clearInterval(interval);
+          document.getElementById('status').textContent = `💥 Crash at x${multiplier.toFixed(2)}!`; 
+          if (betPlaced && inGame) {
+            document.getElementById('status').textContent += ' Umeanguka, umepoteza dau.';
+          }
+          reset();
+        }
+      }, 100);
     }
 
-    function updateMultiplier() {
-      multiplier += 0.01;
-      multiplierDisplay.innerText = multiplier.toFixed(2) + "x";
-      if (Math.random() < 0.01 + multiplier / 100) {
-        gameOver();
-      }
+    function placeBet() {
+      const amount = document.getElementById('betAmount').value;
+      if (!amount || amount <= 0) return alert('Weka kiasi sahihi!');
+      if (betPlaced) return alert('Tayari umeweka dau!');
+      betPlaced = true;
+      inGame = true;
+      multiplier = 1.00;
+      document.getElementById('status').textContent = `Umeweka dau la ${amount}. Ndege imeanza kupaa...`;
+      clearInterval(interval);
+      startGame();
     }
 
     function cashOut() {
-      if (!betPlaced || !cashOutAllowed) return;
+      if (!inGame || !betPlaced) return;
       clearInterval(interval);
-      let winnings = Math.floor(betAmount * multiplier);
-      balance += winnings;
-      balanceDisplay.innerText = balance;
-      logHistory(`✅ Ume-cash out: ${winnings} TZS kwa ${multiplier.toFixed(2)}x`);
-      resetGame();
+      const won = document.getElementById('betAmount').value * multiplier;
+      document.getElementById('status').textContent = `✅ Umejitoa kwa x${multiplier.toFixed(2)}. Umeshinda ${won.toFixed(2)}`;
+      reset();
     }
 
-    function gameOver() {
-      logHistory(`❌ Ndege imeanguka! Uliweka ${betAmount} TZS kwa ${multiplier.toFixed(2)}x`);
-      resetGame();
-    }
-
-    function logHistory(msg) {
-      let li = document.createElement("li");
-      li.innerText = msg;
-      historyList.prepend(li);
-    }
-
-    function resetGame() {
+    function reset() {
+      inGame = false;
       betPlaced = false;
-      cashOutAllowed = false;
-      cashOutBtn.disabled = true;
-      multiplier = 1;
+      multiplier = 1.00;
     }
   </script>
 </body>
 </html>
 
-   
+
+
+    
+
