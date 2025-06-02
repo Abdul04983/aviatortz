@@ -1,30 +1,4 @@
-npm init -y
-npm install express mongoose bcryptjs jsonwebtoken cors
-module.exports = {
-  mongoURI: 'mongodb://localhost:27017/aviator_tz_demo',
-  jwtSecret: 'aviatorSecretKey123',
-};
-const mongoose = require('mongoose');
 
-const UserSchema = new mongoose.Schema({
-  username: { type: String, unique: true },
-  password: String,
-  balance: { type: Number, default: 1000 }, // virtual initial money
-});
-
-module.exports = mongoose.model('User', UserSchema);
-const mongoose = require('mongoose');
-
-const BetSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
-  amount: Number,
-  cashOutMultiplier: Number,
-  crashMultiplier: Number,
-  result: String, // 'win' or 'lose'
-  date: { type: Date, default: Date.now },
-});
-
-module.exports = mongoose.model('Bet', BetSchema);
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
