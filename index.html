@@ -1,17 +1,75 @@
-aviator-tz-demo/
- ├── backend/
- │    ├── models/
- │    │    ├── User.js
- │    │    └── Bet.js
- │    ├── routes/
- │    │    ├── auth.js
- │    │    └── bet.js
- │    ├── server.js
- │    └── config.js
- └── frontend/
-      ├── public/
-      ├── src/
-      │    ├── App.js
-      │    ├── components/
-      │    └── index.js
-      └── package.json
+npm init -y
+npm install express mongoose bcryptjs jsonwebtoken cors
+module.exports = {
+  mongoURI: 'mongodb://localhost:27017/aviator_tz_demo',
+  jwtSecret: 'aviatorSecretKey123',
+};
+const mongoose = require('mongoose');
+
+const UserSchema = new mongoose.Schema({
+  username: { type: String, unique: true },
+  password: String,
+  balance: { type: Number, default: 1000 }, // virtual initial money
+});
+
+module.exports = mongoose.model('User', UserSchema);
+const mongoose = require('mongoose');
+
+const BetSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  amount: Number,
+  cashOutMultiplier: Number,
+  crashMultiplier: Number,
+  result: String, // 'win' or 'lose'
+  date: { type: Date, default: Date.now },
+});
+
+module.exports = mongoose.model('Bet', BetSchema);
+const express = require('express');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const User = require('../models/User');
+const { jwtSecret } = require('../config');
+
+const router = express.Router();
+
+// Register new user
+router.post('/register', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password)
+    return res.status(400).json({ message: 'Username and password required' });
+
+  try {
+    const exists = await User.findOne({ username });
+    if (exists) return res.status(400).json({ message: 'Username already exists' });
+
+    const hashed = await bcrypt.hash(password, 10);
+    const user = new User({ username, password: hashed });
+    await user.save();
+    res.json({ message: 'User registered successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Login user
+router.post('/login', async (req, res) => {
+  const { username, password } = req.body;
+  if (!username || !password)
+    return res.status(400).json({ message: 'Username and password required' });
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) return res.status(400).json({ message: 'Invalid credentials' });
+
+    const valid = await bcrypt.compare(password, user.password);
+    if (!valid) return res.status(400).json({ message: 'Invalid credentials' });
+
+    const token = jwt.sign({ id: user._id }, jwtSecret);
+    res.json({ token, balance: user.balance, username: user.username });
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+module.exports = router;
