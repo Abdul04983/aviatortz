@@ -1,122 +1,101 @@
+
+    
 <!DOCTYPE html>
 <html lang="sw">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>AVIATOR TZ - CashAviator Game</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AVIATOR TZ - Demo</title>
   <style>
     body {
+      font-family: Arial, sans-serif;
       background-color: #0f172a;
       color: white;
-      font-family: Arial, sans-serif;
       text-align: center;
-      padding: 30px;
+      padding: 20px;
     }
     h1 {
       color: #facc15;
     }
     .plane {
-      font-size: 80px;
-      margin-top: 40px;
-      transition: transform 0.1s ease;
-      display: inline-block;
+      font-size: 60px;
+      margin: 20px 0;
+      animation: fly 5s linear infinite;
+    }
+    @keyframes fly {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100vw); }
     }
     button {
-      background: #22c55e;
-      color: white;
-      border: none;
       padding: 15px 30px;
       font-size: 18px;
-      border-radius: 10px;
+      border: none;
+      border-radius: 8px;
       cursor: pointer;
-      margin: 10px;
-    }
-    button:disabled {
-      background: grey;
-      cursor: not-allowed;
-    }
-    #status {
       margin-top: 20px;
+    }
+    .bet-btn {
+      background-color: #22c55e;
+      color: white;
+    }
+    .bet-btn:hover {
+      background-color: #16a34a;
+    }
+    .cashout-btn {
+      background-color: #f43f5e;
+      color: white;
+      display: none;
+    }
+    .result {
       font-size: 20px;
+      margin-top: 30px;
     }
   </style>
 </head>
 <body>
-  <h1>Karibu CashAviator - AVIATOR TZ</h1>
-  <p>Weka bet yako, fuatilia ndege inavyozidi kupaa, na jaribu ku-cash out kabla ndege inadondoka!</p>
+  <h1>Karibu AVIATOR TZ</h1>
+  <p>Cheza demo ya kubashiri ndege itapaa kwa muda gani!</p>
+  <div class="plane">🛫</div>
 
-  <div class="plane" id="plane">🛫</div>
-  <div id="multiplier" style="font-size: 40px; margin-top: 10px;">x1.00</div>
+  <button class="bet-btn" onclick="startGame()">Weka Bet ya Mfano</button>
+  <button class="cashout-btn" onclick="cashOut()">Cash Out</button>
 
-  <div>
-    <button id="betBtn">Weka Bet</button>
-    <button id="cashOutBtn" disabled>Cash Out</button>
-  </div>
-
-  <div id="status"></div>
+  <div class="result" id="result"></div>
 
   <script>
-    let betPlaced = false;
-    let multiplier = 1;
-    let maxMultiplier = 10; // max multiplier before plane crashes
-    let plane = document.getElementById('plane');
-    let multiplierDisplay = document.getElementById('multiplier');
-    let betBtn = document.getElementById('betBtn');
-    let cashOutBtn = document.getElementById('cashOutBtn');
-    let status = document.getElementById('status');
     let gameInterval;
-    let crashed = false;
-
-    betBtn.onclick = function() {
-      if (betPlaced) return;
-      betPlaced = true;
-      multiplier = 1;
-      crashed = false;
-      multiplierDisplay.textContent = "x1.00";
-      status.textContent = "Ndege imeanza kuruka...";
-      betBtn.disabled = true;
-      cashOutBtn.disabled = false;
-      startGame();
-    };
-
-    cashOutBtn.onclick = function() {
-      if (!betPlaced || crashed) return;
-      status.textContent = `Umecash out kwa ${multiplier.toFixed(2)}x! Hongera! 🎉`;
-      endGame();
-    };
+    let seconds = 0;
+    let gameOver = false;
 
     function startGame() {
+      document.querySelector('.bet-btn').style.display = 'none';
+      document.querySelector('.cashout-btn').style.display = 'inline-block';
+      document.getElementById('result').textContent = '';
+
+      seconds = 0;
+      gameOver = false;
+
       gameInterval = setInterval(() => {
-        if (crashed) return;
-        multiplier += 0.1 + Math.random() * 0.05;
-        multiplierDisplay.textContent = `x${multiplier.toFixed(2)}`;
+        seconds += 0.1;
+        const crashTime = Math.random() * 5 + 2;
 
-        // Animate plane going up
-        plane.style.transform = `translateY(${-multiplier * 10}px)`;
-
-        // Random crash chance increases as multiplier grows
-        if (multiplier > maxMultiplier || Math.random() < (multiplier / maxMultiplier) * 0.02) {
-          crash();
+        if (seconds >= crashTime) {
+          clearInterval(gameInterval);
+          gameOver = true;
+          document.querySelector('.cashout-btn').style.display = 'none';
+          document.getElementById('result').textContent = `💥 Ndege imeanguka baada ya sekunde ${crashTime.toFixed(1)}! Umepoteza.`;
+          document.querySelector('.bet-btn').style.display = 'inline-block';
         }
       }, 100);
     }
 
-    function crash() {
-      crashed = true;
-      clearInterval(gameInterval);
-      multiplierDisplay.textContent = `x0.00`;
-      status.textContent = "Ndege imeanguka! Umepoteza bet. Jaribu tena!";
-      betBtn.disabled = false;
-      cashOutBtn.disabled = true;
-      plane.style.transform = `translateY(0px)`;
-    }
-
-    function endGame() {
-      clearInterval(gameInterval);
-      betPlaced = false;
-      betBtn.disabled = false;
-      cashOutBtn.disabled = true;
-      plane.style.transform = `translateY(0px)`;
+    function cashOut() {
+      if (!gameOver) {
+        clearInterval(gameInterval);
+        document.querySelector('.cashout-btn').style.display = 'none';
+        document.getElementById('result').textContent = `✅ Ume-cash out baada ya sekunde ${seconds.toFixed(1)}! Hongera, umeshinda mfano.`;
+        document.querySelector('.bet-btn').style.display = 'inline-block';
+      }
     }
   </script>
 </body>
